@@ -1,3 +1,5 @@
+import "server-only";
+
 import sessionManagerModuleJson from "@/assets/abi/SessionManagerModule.json";
 import { generateOtp } from "@/utils/generateotp";
 import { BundlerService, CommunityConfig } from "@citizenwallet/sdk";
@@ -54,6 +56,18 @@ export const generateSessionChallenge = () => {
   return generateOtp(6);
 };
 
+/**
+ * Verifies a session request by validating the signature against the session owner
+ *
+ * @param sessionProvider -
+ * @param sessionOwner -
+ * @param source - an email address or a passkey public key
+ * @param type - type email or passkey
+ * @param expiry -
+ * @param signature -
+ *
+ * @returns Promise<boolean> - Returns true if the recovered address from the signature matches the session owner
+ */
 export const verifySessionRequest = async (
   sessionProvider: string,
   sessionOwner: string,
@@ -79,7 +93,6 @@ export const verifySessionRequest = async (
   return recoveredAddress === sessionOwner;
 };
 
-
 export const verifySessionConfirm = async (
   sessionOwner: string,
   sessionHash: string,
@@ -103,7 +116,13 @@ export const requestSession = async (
   signedSessionHash: string,
   sessionExpiry: number
 ): Promise<string> => {
-  const sessionManagerAddress = "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b";
+    const sessionManagerAddress = "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b"; // coming in from Community json
+    
+    /* TODO:
+    refer cards from js-sdk
+    - primary session manager
+    - chain: address
+    **/
 
   const bundler = new BundlerService(community);
 
@@ -146,7 +165,7 @@ export const verifyIncomingSessionRequest = async (
 ): Promise<boolean> => {
   try {
     // Get the session manager contract address
-    const sessionManagerAddress = '0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b';
+    const sessionManagerAddress = "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b";
 
     const rpcProvider = new JsonRpcProvider(community.primaryRPCUrl);
 
@@ -158,20 +177,20 @@ export const verifyIncomingSessionRequest = async (
 
     const result = await contract.sessionRequests(provider, sessionRequestHash);
     if (result.length < 5) {
-      throw new Error('Session request not found');
+      throw new Error("Session request not found");
     }
 
     // check the expiry
     const expiry = Number(result[0]);
     const now = Math.floor(Date.now() / 1000);
     if (expiry < now) {
-      throw new Error('Session request expired');
+      throw new Error("Session request expired");
     }
 
     // check the challenge expiry
     const challengeExpiry = Number(result[1]);
     if (challengeExpiry < now) {
-      throw new Error('Challenge expired');
+      throw new Error("Challenge expired");
     }
 
     // Extract the stored signedSessionHash from the result
@@ -185,7 +204,7 @@ export const verifyIncomingSessionRequest = async (
     // Compare the stored signedSessionHash with the provided one
     return storedSignedSessionHash === calculatedSignedSessionHash;
   } catch (error) {
-    console.error('Error verifying incoming session request:', error);
+    console.error("Error verifying incoming session request:", error);
     return false;
   }
 };
