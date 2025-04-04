@@ -1,16 +1,16 @@
-"use server";
-import { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
-import "@/lib/utils";
+'use server';
+import { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { StatusCodes, ReasonPhrases } from 'http-status-codes';
+// import "@/lib/utils";
 import {
   confirmSession,
   verifyIncomingSessionRequest,
   verifySessionConfirm,
-} from "@/services/session";
-import { Wallet } from "ethers";
-import { CommunityConfig } from "@citizenwallet/sdk";
-import { getConfigOfAlias } from "@/services/community";
+} from '@/services/session';
+import { Wallet } from 'ethers';
+import { CommunityConfig } from '@citizenwallet/sdk';
+import { getConfigOfAlias } from '@/services/community';
 
 interface SessionConfirm {
   provider: string;
@@ -22,9 +22,10 @@ interface SessionConfirm {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { alias: string } }
+  { params }: { params: Promise<{ alias: string }> }
 ) {
   const providerPrivateKey = process.env.PROVIDER_PRIVATE_KEY;
+  const { alias } = await params;
 
   if (!providerPrivateKey) {
     return NextResponse.json(
@@ -80,7 +81,6 @@ export async function PATCH(
   }
 
   // TODO: add 2fa provider to community config
-  const alias = params.alias;
   const config = await getConfigOfAlias(alias);
   const community = new CommunityConfig(config);
 

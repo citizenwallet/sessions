@@ -1,4 +1,4 @@
-import "server-only";
+import 'server-only';
 
 export const sendOtpEmail = async (email: string, otp: number) => {
   const params = {
@@ -11,7 +11,7 @@ export const sendOtpEmail = async (email: string, otp: number) => {
       name: process.env.BREVO_SENDER_NAME,
     },
     templateId: 2,
-    subject: "Brussels Pay - Login Code",
+    subject: 'Brussels Pay - Login Code',
     params,
     messageVersions: [
       {
@@ -20,46 +20,46 @@ export const sendOtpEmail = async (email: string, otp: number) => {
     ],
   };
 
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
     headers: {
-      "api-key": process.env.BREVO_API_KEY!,
-      "Content-Type": "application/json",
-      Accept: "application/json",
+      'api-key': process.env.BREVO_API_KEY!,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to email");
+    throw new Error('Failed to email');
   }
 };
 
 export const sendOtpSMS = async (phone: string, otp: number) => {
   const payload = {
-    sender: "brusselspay",
-    type: "transactional",
-    recipient: phone.replace("+", ""),
-    tag: "logincode",
+    sender: 'brusselspay',
+    type: 'transactional',
+    recipient: phone.replace('+', ''),
+    tag: 'logincode',
     unicodeEnabled: true,
     organisationPrefix: process.env.BREVO_SENDER_NAME,
     content: `Your login code is ${otp}`,
   };
 
   const response = await fetch(
-    "https://api.brevo.com/v3/transactionalSMS/sms",
+    'https://api.brevo.com/v3/transactionalSMS/sms',
     {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "api-key": process.env.BREVO_API_KEY!,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+        'api-key': process.env.BREVO_API_KEY!,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify(payload),
     }
   );
 
   if (!response.ok) {
-    throw new Error("Failed to send SMS");
+    throw new Error('Failed to send SMS');
   }
 };

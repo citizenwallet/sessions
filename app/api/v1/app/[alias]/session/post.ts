@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { StatusCodes, ReasonPhrases } from "http-status-codes";
-import "@/lib/utils";
+import { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { StatusCodes, ReasonPhrases } from 'http-status-codes';
+// import "@/lib/utils";
 import {
   generateSessionChallenge,
   generateSessionHash,
@@ -11,11 +11,11 @@ import {
   generateSessionSalt,
   requestSession,
   verifySessionRequest,
-} from "@/services/session";
-import { getBytes, Wallet } from "ethers";
-import { CommunityConfig } from "@citizenwallet/sdk";
-import { sendOtpEmail } from "@/services/brevo";
- import { getConfigOfAlias } from "@/services/community"; 
+} from '@/services/session';
+import { getBytes, Wallet } from 'ethers';
+import { CommunityConfig } from '@citizenwallet/sdk';
+import { sendOtpEmail } from '@/services/brevo';
+import { getConfigOfAlias } from '@/services/community';
 
 interface SessionRequest {
   provider: string;
@@ -26,8 +26,12 @@ interface SessionRequest {
   signature: string;
 }
 
-export async function POST(req: NextRequest, { params }: { params: { alias: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ alias: string }> }
+) {
   const providerPrivateKey = process.env.PROVIDER_PRIVATE_KEY;
+  const { alias } = await params;
 
   if (!providerPrivateKey) {
     return NextResponse.json(
@@ -100,7 +104,6 @@ export async function POST(req: NextRequest, { params }: { params: { alias: stri
   const signedSessionHash = await signer.signMessage(getBytes(sessionHash));
 
   // TODO: add 2fa provider to community config
-  const alias = params.alias;
   const config = await getConfigOfAlias(alias);
   const community = new CommunityConfig(config);
 
@@ -122,5 +125,3 @@ export async function POST(req: NextRequest, { params }: { params: { alias: stri
     status: StatusCodes.OK,
   });
 }
-
-
