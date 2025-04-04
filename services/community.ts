@@ -1,12 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import { Config } from "@citizenwallet/sdk";
+import { Config } from '@citizenwallet/sdk';
 
-export const getConfigOfAlias = async (
-  alias: string
-): Promise<Config> => {
+export const getConfigOfAlias = async (alias: string): Promise<Config> => {
   if (!process.env.COMMUNITIES_CONFIG_URL) {
-    throw new Error("COMMUNITIES_CONFIG_URL is not set");
+    throw new Error('COMMUNITIES_CONFIG_URL is not set');
   }
 
   const response = await fetch(process.env.COMMUNITIES_CONFIG_URL);
