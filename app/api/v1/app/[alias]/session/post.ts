@@ -3,7 +3,6 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatusCodes, ReasonPhrases } from 'http-status-codes';
-// import "@/lib/utils";
 import {
   generateSessionChallenge,
   generateSessionHash,
@@ -13,16 +12,16 @@ import {
   verifySessionRequest,
 } from '@/services/session';
 import { getBytes, Wallet } from 'ethers';
-import { CommunityConfig } from '@citizenwallet/sdk';
-import { sendOtpEmail } from '@/services/brevo';
+import { CommunityConfig, Config } from '@citizenwallet/sdk';
+// import { sendOtpEmail } from '@/services/brevo';
 import { getConfigOfAlias } from '@/services/community';
 
 interface SessionRequest {
-  provider: string;
-  owner: string;
-  source: string;
-  type: string;
-  expiry: number;
+  provider: string; // process.env.PROVIDER_ACCOUNT_ADDRESS
+  owner: string; // an address of a private key
+  source: string; // an email address, a phone number, a passkey public key
+  type: string; // email, passkey, sms
+  expiry: number; // UTC timestamp
   signature: string;
 }
 
@@ -64,10 +63,15 @@ export async function POST(
     });
   }
 
+  let source = sessionRequest.source;
+  if (sessionRequest.type === 'email') {
+    source = source.toLowerCase().trim();
+  }
+
   const isValid = await verifySessionRequest(
     sessionRequest.provider,
     sessionRequest.owner,
-    sessionRequest.source,
+    source,
     sessionRequest.type,
     sessionRequest.expiry,
     sessionRequest.signature
@@ -104,21 +108,85 @@ export async function POST(
   const signedSessionHash = await signer.signMessage(getBytes(sessionHash));
 
   // TODO: add 2fa provider to community config
-  const config = await getConfigOfAlias(alias);
+  let config: Config;
+  try {
+    config = await getConfigOfAlias(alias);
+  } catch (error) {
+    console.error('Failed to get community config:', error);
+
+    if (error instanceof Error) {
+      if (error.message === 'COMMUNITIES_CONFIG_URL is not set') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.INTERNAL_SERVER_ERROR,
+            message: 'Server configuration error',
+          },
+          { status: StatusCodes.INTERNAL_SERVER_ERROR }
+        );
+      }
+
+      if (error.message.startsWith('No community config found for')) {
+        return NextResponse.json(
+          {
+            status: StatusCodes.NOT_FOUND,
+            message: `Community "${alias}" not found`,
+          },
+          { status: StatusCodes.NOT_FOUND }
+        );
+      }
+    }
+
+    // Generic error response for fetch failures or other errors
+    return NextResponse.json(
+      {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+      },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
+  }
+
   const community = new CommunityConfig(config);
 
-  const txHash = await requestSession(
-    community,
-    signer,
-    providerAccountAddress,
-    sessionSalt,
-    sessionRequestHash,
-    sessionRequest.signature,
-    signedSessionHash,
-    sessionRequest.expiry
-  );
+  let txHash: string;
+  try {
+    txHash = await requestSession(
+      community,
+      signer,
+      providerAccountAddress,
+      sessionSalt,
+      sessionRequestHash,
+      sessionRequest.signature,
+      signedSessionHash,
+      sessionRequest.expiry
+    );
+  } catch (error) {
+    console.error('Session request failed:', error);
 
-  await sendOtpEmail(sessionRequest.source, challenge);
+    if (error instanceof Error) {
+      if (error.message === 'No sessions found') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.BAD_REQUEST,
+            message: 'Community has no session configuration',
+          },
+          { status: StatusCodes.BAD_REQUEST }
+        );
+      }
+    }
+
+    // Generic error response for other types of errors
+    return NextResponse.json(
+      {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+      },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
+  }
+
+  // TODO: temopary. remove later
+  // await sendOtpEmail(source, challenge);
 
   return NextResponse.json({
     sessionRequestTxHash: txHash,

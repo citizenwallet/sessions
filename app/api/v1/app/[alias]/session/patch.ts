@@ -2,14 +2,13 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatusCodes, ReasonPhrases } from 'http-status-codes';
-// import "@/lib/utils";
 import {
   confirmSession,
   verifyIncomingSessionRequest,
   verifySessionConfirm,
 } from '@/services/session';
 import { Wallet } from 'ethers';
-import { CommunityConfig } from '@citizenwallet/sdk';
+import { CommunityConfig, Config } from '@citizenwallet/sdk';
 import { getConfigOfAlias } from '@/services/community';
 
 interface SessionConfirm {
@@ -81,7 +80,44 @@ export async function PATCH(
   }
 
   // TODO: add 2fa provider to community config
-  const config = await getConfigOfAlias(alias);
+  let config: Config;
+  try {
+    config = await getConfigOfAlias(alias);
+  } catch (error) {
+    console.error('Failed to get community config:', error);
+
+    if (error instanceof Error) {
+      if (error.message === 'COMMUNITIES_CONFIG_URL is not set') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.INTERNAL_SERVER_ERROR,
+            message: 'Server configuration error',
+          },
+          { status: StatusCodes.INTERNAL_SERVER_ERROR }
+        );
+      }
+
+      if (error.message.startsWith('No community config found for')) {
+        return NextResponse.json(
+          {
+            status: StatusCodes.NOT_FOUND,
+            message: `Community "${alias}" not found`,
+          },
+          { status: StatusCodes.NOT_FOUND }
+        );
+      }
+    }
+
+    // Generic error response for fetch failures or other errors
+    return NextResponse.json(
+      {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+      },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
+  }
+
   const community = new CommunityConfig(config);
 
   const isSessionHashValid = await verifyIncomingSessionRequest(
@@ -104,14 +140,40 @@ export async function PATCH(
     );
   }
 
-  const txHash = await confirmSession(
-    community,
-    signer,
-    providerAccountAddress,
-    sessionRequest.sessionRequestHash,
-    sessionRequest.sessionHash,
-    sessionRequest.signedSessionHash
-  );
+  let txHash: string;
+  try {
+    txHash = await confirmSession(
+      community,
+      signer,
+      providerAccountAddress,
+      sessionRequest.sessionRequestHash,
+      sessionRequest.sessionHash,
+      sessionRequest.signedSessionHash
+    );
+  } catch (error) {
+    console.error('Session request failed:', error);
+
+    if (error instanceof Error) {
+      if (error.message === 'No sessions found') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.BAD_REQUEST,
+            message: 'Community has no session configuration',
+          },
+          { status: StatusCodes.BAD_REQUEST }
+        );
+      }
+    }
+
+    // Generic error response for other types of errors
+    return NextResponse.json(
+      {
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+      },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
+  }
 
   return NextResponse.json({
     sessionConfirmTxHash: txHash,
