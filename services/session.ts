@@ -1,8 +1,8 @@
-import "server-only";
+import 'server-only';
 
-import sessionManagerModuleJson from "@/assets/abi/SessionManagerModule.json";
-import { generateOtp } from "@/utils/generateotp";
-import { BundlerService, CommunityConfig } from "@citizenwallet/sdk";
+import sessionManagerModuleJson from '@/assets/abi/SessionManagerModule.json';
+import { generateOtp } from '@/utils/generateotp';
+import { BundlerService, CommunityConfig } from '@citizenwallet/sdk';
 import {
   id,
   verifyMessage,
@@ -13,9 +13,10 @@ import {
   Contract,
   keccak256,
   AbiCoder,
-} from "ethers";
+} from 'ethers';
 
 const sessionManagerInterface = new Interface(sessionManagerModuleJson.abi);
+const sessionManagerAddress = '0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b';
 
 export const generateSessionSalt = (source: string, type: string) => {
   return id(`${source}:${type}`);
@@ -30,7 +31,7 @@ export const generateSessionRequestHash = (
   // Use ABI encoding to match the Dart implementation
   const abiCoder = new AbiCoder();
   const packedData = abiCoder.encode(
-    ["address", "address", "bytes32", "uint48"],
+    ['address', 'address', 'bytes32', 'uint48'],
     [sessionProvider, sessionOwner, salt, BigInt(expiry)]
   );
 
@@ -45,7 +46,7 @@ export const generateSessionHash = (
   // Use ABI encoding to match the Dart implementation
   const abiCoder = new AbiCoder();
   const packedData = abiCoder.encode(
-    ["bytes32", "uint256"],
+    ['bytes32', 'uint256'],
     [sessionRequestHash, BigInt(challenge)]
   );
 
@@ -116,20 +117,15 @@ export const requestSession = async (
   signedSessionHash: string,
   sessionExpiry: number
 ): Promise<string> => {
-    const sessionManagerAddress = "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b"; // coming in from Community json
-    
-    /* TODO:
-    refer cards from js-sdk
-    - primary session manager
-    - chain: address
-    **/
+  const { provider_address: sessionManagerAddress } =
+    community.primarySessionConfig;
 
   const bundler = new BundlerService(community);
 
   const challengeExpiry = Math.floor(Date.now() / 1000) + 120;
 
   const data = getBytes(
-    sessionManagerInterface.encodeFunctionData("request", [
+    sessionManagerInterface.encodeFunctionData('request', [
       sessionSalt,
       sessionRequestHash,
       signedSessionRequestHash,
@@ -164,8 +160,8 @@ export const verifyIncomingSessionRequest = async (
   sessionHash: string
 ): Promise<boolean> => {
   try {
-    // Get the session manager contract address
-    const sessionManagerAddress = "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b";
+    const { provider_address: sessionManagerAddress } =
+      community.primarySessionConfig;
 
     const rpcProvider = new JsonRpcProvider(community.primaryRPCUrl);
 
@@ -177,20 +173,20 @@ export const verifyIncomingSessionRequest = async (
 
     const result = await contract.sessionRequests(provider, sessionRequestHash);
     if (result.length < 5) {
-      throw new Error("Session request not found");
+      throw new Error('Session request not found');
     }
 
     // check the expiry
     const expiry = Number(result[0]);
     const now = Math.floor(Date.now() / 1000);
     if (expiry < now) {
-      throw new Error("Session request expired");
+      throw new Error('Session request expired');
     }
 
     // check the challenge expiry
     const challengeExpiry = Number(result[1]);
     if (challengeExpiry < now) {
-      throw new Error("Challenge expired");
+      throw new Error('Challenge expired');
     }
 
     // Extract the stored signedSessionHash from the result
@@ -204,7 +200,7 @@ export const verifyIncomingSessionRequest = async (
     // Compare the stored signedSessionHash with the provided one
     return storedSignedSessionHash === calculatedSignedSessionHash;
   } catch (error) {
-    console.error("Error verifying incoming session request:", error);
+    console.error('Error verifying incoming session request:', error);
     return false;
   }
 };
@@ -217,12 +213,13 @@ export const confirmSession = async (
   sessionHash: string,
   signedSessionHash: string
 ) => {
-  const sessionManagerAddress = "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b";
+  const { provider_address: sessionManagerAddress } =
+    community.primarySessionConfig;
 
   const bundler = new BundlerService(community);
 
   const data = getBytes(
-    sessionManagerInterface.encodeFunctionData("confirm", [
+    sessionManagerInterface.encodeFunctionData('confirm', [
       sessionRequestHash,
       sessionHash,
       signedSessionHash,
