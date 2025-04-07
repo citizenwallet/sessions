@@ -21,7 +21,7 @@ interface SessionRequest {
   owner: string; // an address of a private key
   source: string; // an email address, a phone number, a passkey public key
   type: string; // email, passkey, sms
-  expiry: number; // UTC timestamp
+  expiry: number; // in seconds, UTC timestamp
   signature: string;
 }
 
