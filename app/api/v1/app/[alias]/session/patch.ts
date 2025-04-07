@@ -2,7 +2,6 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatusCodes, ReasonPhrases } from 'http-status-codes';
-// import "@/lib/utils";
 import {
   confirmSession,
   verifyIncomingSessionRequest,
