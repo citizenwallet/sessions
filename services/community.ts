@@ -1,10 +1,16 @@
 import 'server-only';
 
 import { Config } from '@citizenwallet/sdk';
+import walletConfig from '@/assets/config/wallet.pay.brussels.json' assert { type: 'json' };
 
 export const getConfigOfAlias = async (alias: string): Promise<Config> => {
   if (!process.env.COMMUNITIES_CONFIG_URL) {
     throw new Error('COMMUNITIES_CONFIG_URL is not set');
+  }
+
+  // TODO: temporary. remove later
+  if (alias === 'wallet.pay.brussels') {
+    return walletConfig;
   }
 
   const response = await fetch(process.env.COMMUNITIES_CONFIG_URL);
