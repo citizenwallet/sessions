@@ -16,7 +16,6 @@ import {
 } from 'ethers';
 
 const sessionManagerInterface = new Interface(sessionManagerModuleJson.abi);
-const sessionManagerAddress = '0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b';
 
 export const generateSessionSalt = (source: string, type: string) => {
   return id(`${source}:${type}`);
@@ -117,7 +116,7 @@ export const requestSession = async (
   signedSessionHash: string,
   sessionExpiry: number
 ): Promise<string> => {
-  const { provider_address: sessionManagerAddress } =
+  const { module_address: sessionManagerAddress } =
     community.primarySessionConfig;
 
   const bundler = new BundlerService(community);
@@ -160,7 +159,7 @@ export const verifyIncomingSessionRequest = async (
   sessionHash: string
 ): Promise<boolean> => {
   try {
-    const { provider_address: sessionManagerAddress } =
+    const { module_address: sessionManagerAddress } =
       community.primarySessionConfig;
 
     const rpcProvider = new JsonRpcProvider(community.primaryRPCUrl);
@@ -213,7 +212,7 @@ export const confirmSession = async (
   sessionHash: string,
   signedSessionHash: string
 ) => {
-  const { provider_address: sessionManagerAddress } =
+  const { module_address: sessionManagerAddress } =
     community.primarySessionConfig;
 
   const bundler = new BundlerService(community);
