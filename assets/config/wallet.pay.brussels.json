@@ -27,7 +27,7 @@
       "chain_id": 100
     },
     "primary_session_manager": {
-      "address": "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b",
+      "address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
       "chain_id": 100
     }
   },
@@ -69,11 +69,11 @@
     }
   },
   "sessions": {
-    "100:0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b": {
+    "100:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
       "chain_id": 100,
-      "module_address": "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b",
-      "factory_address": "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b",
-      "provider_address": "0x1D36C0DAd15B82D482Fd02f6f6e8c9def8B5b63b"
+      "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
+      "factory_address": "0xEd0cD3886b84369A0e29Db9a4480ADF5051c76C9",
+      "provider_address": ""
     }
   },
   "chains": {
