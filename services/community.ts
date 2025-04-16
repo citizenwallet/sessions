@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { Config } from '@citizenwallet/sdk';
-import walletConfig from '@/assets/config/wallet.pay.brussels.json' assert { type: 'json' };
+import walletPayBrusselsConfig from '@/assets/config/wallet.pay.brussels.json' assert { type: 'json' };
 
 export const getConfigOfAlias = async (alias: string): Promise<Config> => {
   if (!process.env.COMMUNITIES_CONFIG_URL) {
@@ -10,7 +10,7 @@ export const getConfigOfAlias = async (alias: string): Promise<Config> => {
 
   // TODO: temporary. remove later
   if (alias === 'wallet.pay.brussels') {
-    return walletConfig;
+    return walletPayBrusselsConfig;
   }
 
   const response = await fetch(process.env.COMMUNITIES_CONFIG_URL);
