@@ -76,6 +76,7 @@ export async function POST(
     );
 
     const challenge = await generateSessionChallenge();
+    console.log('challenge', challenge);
 
     const sessionHash = generateSessionHash(sessionRequestHash, challenge);
 
@@ -93,8 +94,11 @@ export async function POST(
     );
 
     if (sessionRequest.type === 'email') {
-      console.log('challenge', challenge);
       // await sendOtpEmail(source, challenge); // TODO uncomment this
+    }
+
+    if (sessionRequest.type === 'sms') {
+      // await sendOtpSms(source, challenge); // TODO uncomment this
     }
 
     return NextResponse.json({
