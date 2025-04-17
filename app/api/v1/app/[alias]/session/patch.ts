@@ -8,14 +8,14 @@ import {
   verifySessionConfirm,
 } from '@/services/session';
 import { Wallet } from 'ethers';
-import { CommunityConfig, Config } from '@citizenwallet/sdk';
+import { CommunityConfig } from '@citizenwallet/sdk';
 import { getConfigOfAlias } from '@/services/community';
 
 interface SessionConfirm {
-  provider: string;
-  owner: string;
-  sessionRequestHash: string;
-  sessionHash: string;
+  provider: string; // primary session manager provider address
+  owner: string; // an address of a private key
+  sessionRequestHash: string; // hash created from sessionRequest
+  sessionHash: string; // hash of sessionRequestHash and challenge
   signedSessionHash: string;
 }
 
@@ -26,67 +26,75 @@ export async function PATCH(
   const providerPrivateKey = process.env.PROVIDER_PRIVATE_KEY;
   const { alias } = await params;
 
-  if (!providerPrivateKey) {
-    return NextResponse.json(
-      {
-        status: StatusCodes.INTERNAL_SERVER_ERROR, // 500
-        message: ReasonPhrases.INTERNAL_SERVER_ERROR, // "Internal Server Error" message
-      },
-      {
-        status: StatusCodes.INTERNAL_SERVER_ERROR, // Using the 500 constant
-      }
-    );
-  }
-
-  const signer = new Wallet(providerPrivateKey);
-
-  const providerAccountAddress = process.env.PROVIDER_ACCOUNT_ADDRESS;
-  if (!providerAccountAddress) {
-    return NextResponse.json(
-      {
-        status: StatusCodes.INTERNAL_SERVER_ERROR, // 500
-        message: ReasonPhrases.INTERNAL_SERVER_ERROR, // "Internal Server Error" message
-      },
-      {
-        status: StatusCodes.INTERNAL_SERVER_ERROR, // Using the 500 constant
-      }
-    );
-  }
-
-  const sessionRequest: SessionConfirm = await req.json();
-  if (sessionRequest.provider !== providerAccountAddress) {
-    return NextResponse.json({
-      status: StatusCodes.BAD_REQUEST, // 400
-      message: ReasonPhrases.BAD_REQUEST, // "Bad Request" message
-    });
-  }
-
-  const isValid = await verifySessionConfirm(
-    sessionRequest.owner,
-    sessionRequest.sessionHash,
-    sessionRequest.signedSessionHash
-  );
-
-  if (!isValid) {
-    return NextResponse.json(
-      {
-        status: StatusCodes.BAD_REQUEST, // 400
-        message: ReasonPhrases.BAD_REQUEST, // "Bad Request" message
-      },
-      {
-        status: StatusCodes.BAD_REQUEST, // Using the 400 constant
-      }
-    );
-  }
-
-  // TODO: add 2fa provider to community config
-  let config: Config;
   try {
-    config = await getConfigOfAlias(alias);
+    const rawBody = await req.json();
+    const sessionConfirm = sanitizeSessionConfirm(rawBody);
+
+    const config = await getConfigOfAlias(alias);
+    const community = new CommunityConfig(config);
+
+    if (!providerPrivateKey) {
+      throw new Error('PROVIDER_PRIVATE_KEY is not set');
+    }
+
+    const signer = new Wallet(providerPrivateKey);
+
+    const sessionManager = community.primarySessionConfig;
+    if (sessionConfirm.provider !== sessionManager.provider_address) {
+      throw new Error('Invalid provider address');
+    }
+
+    const isValid = await verifySessionConfirm(
+      sessionConfirm.owner,
+      sessionConfirm.sessionHash,
+      sessionConfirm.signedSessionHash
+    );
+
+    if (!isValid) {
+      throw new Error('Invalid session confirm');
+    }
+
+    const isSessionHashValid = await verifyIncomingSessionRequest(
+      community,
+      signer,
+      sessionManager.provider_address,
+      sessionConfirm.sessionRequestHash,
+      sessionConfirm.sessionHash
+    );
+
+    if (!isSessionHashValid) {
+      throw new Error('Invalid session hash');
+    }
+
+    const txHash = await confirmSession(
+      community,
+      signer,
+      sessionManager.provider_address,
+      sessionConfirm.sessionRequestHash,
+      sessionConfirm.sessionHash,
+      sessionConfirm.signedSessionHash
+    );
+
+    return NextResponse.json({
+      sessionConfirmTxHash: txHash,
+      status: StatusCodes.OK,
+    });
   } catch (error) {
-    console.error('Failed to get community config:', error);
+    console.error('Unexpected error in session PATCH handler:', error);
 
     if (error instanceof Error) {
+      // Environment variable errors
+      if (error.message === 'PROVIDER_PRIVATE_KEY is not set') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.INTERNAL_SERVER_ERROR,
+            message: 'Server configuration error',
+          },
+          { status: StatusCodes.INTERNAL_SERVER_ERROR }
+        );
+      }
+
+      // Community config errors
       if (error.message === 'COMMUNITIES_CONFIG_URL is not set') {
         return NextResponse.json(
           {
@@ -106,66 +114,44 @@ export async function PATCH(
           { status: StatusCodes.NOT_FOUND }
         );
       }
-    }
 
-    // Generic error response for fetch failures or other errors
-    return NextResponse.json(
-      {
-        status: StatusCodes.INTERNAL_SERVER_ERROR,
-        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
-      },
-      { status: StatusCodes.INTERNAL_SERVER_ERROR }
-    );
-  }
-
-  const community = new CommunityConfig(config);
-
-  const isSessionHashValid = await verifyIncomingSessionRequest(
-    community,
-    signer,
-    providerAccountAddress,
-    sessionRequest.sessionRequestHash,
-    sessionRequest.sessionHash
-  );
-
-  if (!isSessionHashValid) {
-    return NextResponse.json(
-      {
-        status: StatusCodes.BAD_REQUEST, // 400
-        message: ReasonPhrases.BAD_REQUEST, // "Bad Request" message
-      },
-      {
-        status: StatusCodes.BAD_REQUEST, // Using the 400 constant
+      // Session verification errors from verifyIncomingSessionRequest
+      if (error.message === 'Session request not found') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.NOT_FOUND,
+            message: 'Session request not found',
+          },
+          { status: StatusCodes.NOT_FOUND }
+        );
       }
-    );
-  }
 
-  let txHash: string;
-  try {
-    txHash = await confirmSession(
-      community,
-      signer,
-      providerAccountAddress,
-      sessionRequest.sessionRequestHash,
-      sessionRequest.sessionHash,
-      sessionRequest.signedSessionHash
-    );
-  } catch (error) {
-    console.error('Session request failed:', error);
-
-    if (error instanceof Error) {
-      if (error.message === 'No sessions found') {
+      if (
+        error.message === 'Session request expired' ||
+        error.message === 'Challenge expired'
+      ) {
         return NextResponse.json(
           {
             status: StatusCodes.BAD_REQUEST,
-            message: 'Community has no session configuration',
+            message: error.message,
+          },
+          { status: StatusCodes.BAD_REQUEST }
+        );
+      }
+
+      // Request body validation errors
+      if (error.message.includes('in request body')) {
+        return NextResponse.json(
+          {
+            status: StatusCodes.BAD_REQUEST,
+            message: error.message,
           },
           { status: StatusCodes.BAD_REQUEST }
         );
       }
     }
 
-    // Generic error response for other types of errors
+    // Generic error for unknown error types
     return NextResponse.json(
       {
         status: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -174,9 +160,43 @@ export async function PATCH(
       { status: StatusCodes.INTERNAL_SERVER_ERROR }
     );
   }
+}
 
-  return NextResponse.json({
-    sessionConfirmTxHash: txHash,
-    status: StatusCodes.OK,
-  });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sanitizeSessionConfirm(body: any): SessionConfirm {
+  if (!body) {
+    throw new Error('Request body is required');
+  }
+
+  // Check required fields
+  if (!body.provider || typeof body.provider !== 'string') {
+    throw new Error('Invalid provider address in request body');
+  }
+
+  if (!body.owner || typeof body.owner !== 'string') {
+    throw new Error('Invalid owner address in request body');
+  }
+
+  if (!body.sessionRequestHash || typeof body.sessionRequestHash !== 'string') {
+    throw new Error('Invalid sessionRequestHash in request body');
+  }
+
+  if (!body.sessionHash || typeof body.sessionHash !== 'string') {
+    throw new Error('Invalid sessionHash in request body');
+  }
+
+  if (!body.signedSessionHash || typeof body.signedSessionHash !== 'string') {
+    throw new Error('Invalid signedSessionHash in request body');
+  }
+
+  // Sanitize the request
+  const sanitized: SessionConfirm = {
+    provider: body.provider,
+    owner: body.owner,
+    sessionRequestHash: body.sessionRequestHash,
+    sessionHash: body.sessionHash,
+    signedSessionHash: body.signedSessionHash,
+  };
+
+  return sanitized;
 }
