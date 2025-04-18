@@ -11,7 +11,7 @@ import {
 } from '@/services/session';
 import { getBytes, Wallet } from 'ethers';
 import { CommunityConfig } from '@citizenwallet/sdk';
-// import { sendOtpEmail } from '@/services/brevo';
+import { sendOtpEmail, sendOtpSMS } from '@/services/brevo';
 import { getConfigOfAlias } from '@/services/community';
 
 type SourceType = 'email' | 'sms' | 'passkey';
@@ -94,11 +94,11 @@ export async function POST(
     );
 
     if (sessionRequest.type === 'email') {
-      // await sendOtpEmail(source, challenge); // TODO uncomment this
+      await sendOtpEmail(sessionRequest.source, challenge);
     }
 
     if (sessionRequest.type === 'sms') {
-      // await sendOtpSms(source, challenge); // TODO uncomment this
+      await sendOtpSMS(sessionRequest.source, challenge);
     }
 
     return NextResponse.json({
