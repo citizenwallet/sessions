@@ -25,10 +25,78 @@ interface SessionRequest {
   signature: string; // signature hex
 }
 
+/**
+ * POST handler for session requests
+ * 
+ * @route POST /api/v1/app/[alias]/session
+ * 
+ * @param {NextRequest} req - The request object
+ * @param {Object} params - Route parameters
+ * @param {string} params.alias - Community alias
+ * 
+ * @requestBody {Object} request
+ * @property {string} provider - Community primary session manager provider address
+ * @property {string} owner - Address of the private key owner
+ * @property {string} source - Value of email, phone number, or passkey public key
+ * @property {('email'|'sms'|'passkey')} type - Type of authentication method
+ * @property {number} expiry - Session expiry timestamp in seconds (UTC)
+ * @property {string} signature - Signed session request
+ * 
+ * @returns {Promise<NextResponse>} JSON Response
+ * @success {Object} 200
+ * @property {string} sessionRequestTxHash - Transaction hash of the session request
+ * @property {string} [sessionRequestChallengeHash] - Challenge hash (only for passkey type)
+ * @property {number} [sessionRequestChallengeExpiry] - Challenge expiry timestamp (only for passkey type)
+ * @property {number} status - HTTP status code
+ * 
+ * @error {Object} 400
+ * @property {number} status - HTTP status code
+ * @property {string} message - Error message for invalid requests:
+ *   - "Invalid provider address in request"
+ *   - "Invalid session signature"
+ *   - "Community has no session configuration"
+ *   - Various request body validation errors
+ * 
+ * @error {Object} 404
+ * @property {number} status - HTTP status code
+ * @property {string} message - Error message when community not found
+ * 
+ * @error {Object} 500
+ * @property {number} status - HTTP status code
+ * @property {string} message - Server configuration or internal error message
+ * 
+ * @example
+ * // Request
+ * POST /api/v1/app/mycommunity/session
+ * {
+ *   "provider": "0x1234...",
+ *   "owner": "0x5678...",
+ *   "source": "user@example.com",
+ *   "type": "email",
+ *   "expiry": 1234567890,
+ *   "signature": "0xabcd..."
+ * }
+ * 
+ * // Success Response (email/sms)
+ * {
+ *   "sessionRequestTxHash": "0xdef...",
+ *   "status": 200
+ * }
+ * 
+ * // Success Response (passkey)
+ * {
+ *   "sessionRequestTxHash": "0xdef...",
+ *   "sessionRequestChallengeHash": "challenge_message",
+ *   "sessionRequestChallengeExpiry": 1234567890,
+ *   "status": 200
+ * }
+ */
+
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ alias: string }> }
-) {
+): Promise<NextResponse> {
   const providerPrivateKey = process.env.PROVIDER_PRIVATE_KEY;
   const { alias } = await params;
 
