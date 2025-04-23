@@ -19,6 +19,64 @@ interface SessionConfirm {
   signedSessionHash: string;
 }
 
+/**
+ * PATCH handler for confirming session requests
+ * 
+ * @route PATCH /api/v1/app/[alias]/session
+ * 
+ * @param {NextRequest} req - The request object
+ * @param {Object} params - Route parameters
+ * @param {string} params.alias - Community alias
+ * 
+ * @requestBody {Object} request
+ * @property {string} provider - Community primary session manager provider address
+ * @property {string} owner - Address of the private key owner
+ * @property {string} sessionRequestHash - generateSessionRequestHash(provider, sessionOwner, salt, expiry)
+ * @property {string} sessionHash - generateSessionHash(sessionRequestHash,challenge)
+ * @property {string} signedSessionHash - Signature of the session hash by the owner
+ * 
+ * @returns {Promise<NextResponse>} JSON Response
+ * @success {Object} 200
+ * @property {string} sessionConfirmTxHash - Transaction hash of the session confirmation
+ * @property {number} status - HTTP status code
+ * 
+ * @error {Object} 400
+ * @property {number} status - HTTP status code
+ * @property {string} message - Error message for invalid requests:
+ *   - "Session request expired"
+ *   - "Challenge expired"
+ *   - "Invalid session confirm"
+ *   - "Invalid session hash"
+ *   - Various request body validation errors
+ * 
+ * @error {Object} 404
+ * @property {number} status - HTTP status code
+ * @property {string} message - Error messages:
+ *   - "Community '{alias}' not found"
+ *   - "Session request not found"
+ * 
+ * @error {Object} 500
+ * @property {number} status - HTTP status code
+ * @property {string} message - Server configuration or internal error message
+ * 
+ * @example
+ * // Request
+ * PATCH /api/v1/app/mycommunity/session
+ * {
+ *   "provider": "0x1234...",
+ *   "owner": "0x5678...",
+ *   "sessionRequestHash": "0xabcd...",
+ *   "sessionHash": "0xdef...",
+ *   "signedSessionHash": "0xghij..."
+ * }
+ * 
+ * // Success Response
+ * {
+ *   "sessionConfirmTxHash": "0xklmn...",
+ *   "status": 200
+ * }
+ */
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ alias: string }> }
