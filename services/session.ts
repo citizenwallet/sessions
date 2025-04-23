@@ -40,7 +40,7 @@ export const generateSessionRequestHash = (
 
 export const generateSessionHash = (
   sessionRequestHash: string,
-  challenge: number
+  challenge: number | string
 ) => {
   // Use ABI encoding to match the Dart implementation
   const abiCoder = new AbiCoder();

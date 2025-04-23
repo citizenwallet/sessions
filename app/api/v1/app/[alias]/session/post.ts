@@ -10,7 +10,7 @@ import {
   verifySessionRequest,
 } from '@/services/session';
 import { getBytes, Wallet } from 'ethers';
-import { CommunityConfig } from '@citizenwallet/sdk';
+import { CommunityConfig, generateConnectionMessage } from '@citizenwallet/sdk';
 import { sendOtpEmail, sendOtpSMS } from '@/services/brevo';
 import { getConfigOfAlias } from '@/services/community';
 
@@ -75,8 +75,21 @@ export async function POST(
       sessionRequest.expiry
     );
 
-    const challenge = await generateSessionChallenge();
-    console.log('challenge', challenge);
+    let challenge: string | number | null = null;
+    if (['email', 'sms'].includes(sessionRequest.type)) {
+      challenge = await generateSessionChallenge();
+    }
+
+    if (sessionRequest.type === 'passkey') {
+      challenge = generateConnectionMessage(
+        sessionRequest.owner,
+        sessionRequest.expiry.toString(),
+      );
+    }
+
+    if (!challenge) {
+      throw new Error('Challenge generation failed');
+    }
 
     const sessionHash = generateSessionHash(sessionRequestHash, challenge);
 
@@ -94,15 +107,23 @@ export async function POST(
     );
 
     if (sessionRequest.type === 'email') {
-      await sendOtpEmail(sessionRequest.source, challenge);
+      await sendOtpEmail(sessionRequest.source, Number(challenge));
     }
 
     if (sessionRequest.type === 'sms') {
-      await sendOtpSMS(sessionRequest.source, challenge);
+      await sendOtpSMS(sessionRequest.source, Number(challenge));
     }
 
     return NextResponse.json({
       sessionRequestTxHash: txHash,
+
+      sessionRequestChallengeHash:
+        sessionRequest.type === 'passkey' ? challenge : undefined,
+      sessionRequestChallengeExpiry:
+        sessionRequest.type === 'passkey'
+          ? sessionRequest.expiry
+          : undefined,
+      
       status: StatusCodes.OK,
     });
   } catch (error) {
