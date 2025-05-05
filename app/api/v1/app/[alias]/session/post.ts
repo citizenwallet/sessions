@@ -1,18 +1,19 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatusCodes, ReasonPhrases } from 'http-status-codes';
+import { getBytes, Wallet } from 'ethers';
 import {
-  generateSessionChallenge,
+  CommunityConfig,
+  generateConnectionMessage,
   generateSessionHash,
   generateSessionRequestHash,
   generateSessionSalt,
   requestSession,
   verifySessionRequest,
-} from '@/services/session';
-import { getBytes, Wallet } from 'ethers';
-import { CommunityConfig, generateConnectionMessage } from '@citizenwallet/sdk';
+} from '@citizenwallet/sdk';
 import { sendOtpEmail, sendOtpSMS } from '@/services/brevo';
 import { getConfigOfAlias } from '@/services/community';
+import { generateOtp } from '@/utils/generateotp';
 
 type SourceType = 'email' | 'sms' | 'passkey';
 
@@ -117,41 +118,40 @@ export async function POST(
       throw new Error('Invalid provider address');
     }
 
-    const isValid = await verifySessionRequest(
-      sessionRequest.provider,
-      sessionRequest.owner,
-      sessionRequest.source,
-      sessionRequest.type,
-      sessionRequest.expiry,
-      sessionRequest.signature
-    );
+    const isValid = verifySessionRequest({
+      community,
+      sessionOwner: sessionRequest.owner,
+      source: sessionRequest.source,
+      type: sessionRequest.type,
+      expiry: sessionRequest.expiry,
+      signature: sessionRequest.signature,
+    });
 
     if (!isValid) {
       throw new Error('Invalid session signature');
     }
 
-    const sessionSalt = generateSessionSalt(
-      sessionRequest.source,
-      sessionRequest.type
-    );
+    const sessionSalt = generateSessionSalt({
+      source: sessionRequest.source,
+      type: sessionRequest.type,
+    });
 
-    const sessionRequestHash = generateSessionRequestHash(
-      sessionRequest.provider,
-      sessionRequest.owner,
-      sessionSalt,
-      sessionRequest.expiry
-    );
+    const sessionRequestHash = generateSessionRequestHash({
+      community,
+      sessionOwner: sessionRequest.owner,
+      salt: sessionSalt,
+      expiry: sessionRequest.expiry,
+    });
 
     let challenge: string | number | null = null;
     if (['email', 'sms'].includes(sessionRequest.type)) {
-      challenge = await generateSessionChallenge();
+      challenge = await generateOtp(6);
     }
 
     if (sessionRequest.type === 'passkey') {
       challenge = generateConnectionMessage(
         sessionRequest.owner,
-        sessionRequest.expiry.toString(),
-        '' // TODO: remove after PR https://github.com/citizenwallet/js-sdk/pull/4
+        sessionRequest.expiry.toString()
       );
     }
 
@@ -159,20 +159,19 @@ export async function POST(
       throw new Error('Challenge generation failed');
     }
 
-    const sessionHash = generateSessionHash(sessionRequestHash, challenge);
+    const sessionHash = generateSessionHash({ sessionRequestHash, challenge });
 
     const signedSessionHash = await signer.signMessage(getBytes(sessionHash));
 
-    const txHash = await requestSession(
+    const txHash = await requestSession({
       community,
       signer,
-      sessionManager.provider_address,
       sessionSalt,
       sessionRequestHash,
-      sessionRequest.signature,
+      signedSessionRequestHash: sessionRequest.signature,
       signedSessionHash,
-      sessionRequest.expiry
-    );
+      sessionExpiry: sessionRequest.expiry,
+    });
 
     if (sessionRequest.type === 'email') {
       await sendOtpEmail(sessionRequest.source, Number(challenge));
