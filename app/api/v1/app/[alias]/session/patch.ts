@@ -112,14 +112,12 @@ export async function PATCH(
       throw new Error('Invalid session confirm');
     }
 
-    const isSessionHashValid = await verifyIncomingSessionRequest(
-      {
-        community: community,
-        signer,
-        sessionRequestHash: sessionConfirm.sessionRequestHash,
-        sessionHash: sessionConfirm.sessionHash,
-      }
-    );
+    const isSessionHashValid = await verifyIncomingSessionRequest({
+      community: community,
+      signer,
+      sessionRequestHash: sessionConfirm.sessionRequestHash,
+      sessionHash: sessionConfirm.sessionHash,
+    });
 
     if (!isSessionHashValid) {
       throw new Error('Invalid session hash');
