@@ -2,13 +2,13 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatusCodes, ReasonPhrases } from 'http-status-codes';
+import { Wallet } from 'ethers';
 import {
+  CommunityConfig,
   confirmSession,
   verifyIncomingSessionRequest,
   verifySessionConfirm,
-} from '@/services/session';
-import { Wallet } from 'ethers';
-import { CommunityConfig } from '@citizenwallet/sdk';
+} from '@citizenwallet/sdk';
 import { getConfigOfAlias } from '@/services/community';
 
 interface SessionConfirm {
@@ -102,36 +102,36 @@ export async function PATCH(
       throw new Error('Invalid provider address');
     }
 
-    const isValid = await verifySessionConfirm(
-      sessionConfirm.owner,
-      sessionConfirm.sessionHash,
-      sessionConfirm.signedSessionHash
-    );
+    const isValid = verifySessionConfirm({
+      sessionOwner: sessionConfirm.owner,
+      sessionHash: sessionConfirm.sessionHash,
+      signedSessionHash: sessionConfirm.signedSessionHash,
+    });
 
     if (!isValid) {
       throw new Error('Invalid session confirm');
     }
 
     const isSessionHashValid = await verifyIncomingSessionRequest(
-      community,
-      signer,
-      sessionManager.provider_address,
-      sessionConfirm.sessionRequestHash,
-      sessionConfirm.sessionHash
+      {
+        community: community,
+        signer,
+        sessionRequestHash: sessionConfirm.sessionRequestHash,
+        sessionHash: sessionConfirm.sessionHash,
+      }
     );
 
     if (!isSessionHashValid) {
       throw new Error('Invalid session hash');
     }
 
-    const txHash = await confirmSession(
+    const txHash = await confirmSession({
       community,
       signer,
-      sessionManager.provider_address,
-      sessionConfirm.sessionRequestHash,
-      sessionConfirm.sessionHash,
-      sessionConfirm.signedSessionHash
-    );
+      sessionRequestHash: sessionConfirm.sessionRequestHash,
+      sessionHash: sessionConfirm.sessionHash,
+      signedSessionHash: sessionConfirm.signedSessionHash,
+    });
 
     return NextResponse.json({
       sessionConfirmTxHash: txHash,
