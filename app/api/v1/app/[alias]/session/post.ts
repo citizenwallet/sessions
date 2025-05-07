@@ -12,7 +12,7 @@ import {
   verifySessionRequest,
 } from '@citizenwallet/sdk';
 import { sendOtpEmail, sendOtpSMS } from '@/services/brevo';
-import { getConfigOfAlias } from '@/services/community';
+import { getConfigOfAlias } from '@/services/cw/community';
 import { generateOtp } from '@/utils/generateotp';
 
 type SourceType = 'email' | 'sms' | 'passkey';
