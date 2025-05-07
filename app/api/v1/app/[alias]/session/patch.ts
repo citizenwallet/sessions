@@ -9,7 +9,7 @@ import {
   verifyIncomingSessionRequest,
   verifySessionConfirm,
 } from '@citizenwallet/sdk';
-import { getConfigOfAlias } from '@/services/community';
+import { getConfigOfAlias } from '@/services/cw/community';
 
 interface SessionConfirm {
   provider: string; // primary session manager provider address
