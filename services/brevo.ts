@@ -10,8 +10,8 @@ export const sendOtpEmail = async (email: string, otp: number) => {
       email: process.env.BREVO_SENDER_EMAIL,
       name: process.env.BREVO_SENDER_NAME,
     },
-    templateId: 2,
-    subject: 'Brussels Pay - Login Code',
+    templateId: 1,
+    subject: 'Citizen Wallet - Login Code',
     params,
     messageVersions: [
       {
