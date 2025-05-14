@@ -415,7 +415,7 @@
         "paymaster_type": "cw-safe"
       }
     },
-       "sessions": {
+    "sessions": {
       "137:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 137,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -503,7 +503,6 @@
       }
     },
 
-
     "chains": {
       "100": {
         "id": 100,
@@ -587,7 +586,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -683,7 +681,6 @@
       }
     },
 
-
     "chains": {
       "42220": {
         "id": 42220,
@@ -777,7 +774,7 @@
       }
     },
 
-      "sessions": {
+    "sessions": {
       "100:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 100,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -785,7 +782,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "100": {
@@ -854,7 +850,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "137:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 137,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -862,7 +858,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "137": {
@@ -932,7 +927,7 @@
         "paymaster_type": "cw"
       }
     },
-      "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1009,7 +1004,7 @@
       }
     },
 
-      "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1017,7 +1012,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -1085,7 +1079,7 @@
       }
     },
 
-      "sessions": {
+    "sessions": {
       "137:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 137,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1093,7 +1087,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "137": {
@@ -1163,7 +1156,7 @@
         "gas_extra_percentage": 50
       }
     },
-       "sessions": {
+    "sessions": {
       "137:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 137,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1241,7 +1234,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "8453:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 8453,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1249,7 +1242,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "8453": {
@@ -1317,7 +1309,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "8453:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 8453,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1325,7 +1317,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "8453": {
@@ -1392,7 +1383,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "137:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 137,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1400,7 +1391,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "137": {
@@ -1467,7 +1457,7 @@
       }
     },
 
-     "sessions": {
+    "sessions": {
       "137:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 137,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1475,7 +1465,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "137": {
@@ -1542,7 +1531,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1550,7 +1539,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -1624,7 +1612,7 @@
       }
     },
 
-   "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1632,7 +1620,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -1706,7 +1693,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1714,7 +1701,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -1788,7 +1774,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1796,7 +1782,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -1870,7 +1855,7 @@
       }
     },
 
-      "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1878,7 +1863,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "cards": {
       "42220:0xA3E1446E332a098A1f3b0555c5d149b4784A095F": {
@@ -1951,7 +1935,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -1959,7 +1943,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -2025,7 +2008,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "84532:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 84532,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -2033,7 +2016,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "84532": {
@@ -2099,7 +2081,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -2107,7 +2089,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
@@ -2180,7 +2161,7 @@
       }
     },
 
-       "sessions": {
+    "sessions": {
       "42220:0xE2F3DC3E638113b9496060349e5332963d9C1152": {
         "chain_id": 42220,
         "module_address": "0xE2F3DC3E638113b9496060349e5332963d9C1152",
@@ -2188,7 +2169,6 @@
         "provider_address": "0xF3004A1690f97Cf5d307eDc5958a7F76b62f9FC9"
       }
     },
-
 
     "chains": {
       "42220": {
