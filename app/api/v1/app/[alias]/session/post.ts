@@ -14,6 +14,13 @@ import {
 import { sendOtpEmail, sendOtpSMS } from '@/services/brevo';
 import { getConfigOfAlias } from '@/services/cw/community';
 import { generateOtp } from '@/utils/generateotp';
+import { getServiceRoleClient } from '@/services/db';
+import {
+  getImmediateSessionRequestCount,
+  getRecentSessionRequestCount,
+  getDailySessionRequestCount,
+  createSessionRequest,
+} from '@/services/db/session_request';
 
 type SourceType = 'email' | 'sms' | 'passkey';
 
@@ -136,6 +143,44 @@ export async function POST(
       type: sessionRequest.type,
     });
 
+    const client = getServiceRoleClient();
+
+    // max 1 request per 30 seconds
+    const immediateSessionRequestCount = await getImmediateSessionRequestCount(
+      client,
+      {
+        salt: sessionSalt,
+        alias,
+      }
+    );
+
+    if (immediateSessionRequestCount > 0) {
+      throw new Error('Too many requests');
+    }
+
+    // max 3 requests per 10 minutes
+    const recentSessionRequestCount = await getRecentSessionRequestCount(
+      client,
+      {
+        salt: sessionSalt,
+        alias,
+      }
+    );
+
+    if (recentSessionRequestCount >= 3) {
+      throw new Error('Too many requests');
+    }
+
+    // max 20 requests per day
+    const dailySessionRequestCount = await getDailySessionRequestCount(client, {
+      salt: sessionSalt,
+      alias,
+    });
+
+    if (dailySessionRequestCount >= 20) {
+      throw new Error('Too many requests');
+    }
+
     const sessionRequestHash = generateSessionRequestHash({
       community,
       sessionOwner: sessionRequest.owner,
@@ -181,6 +226,11 @@ export async function POST(
       await sendOtpSMS(sessionRequest.source, Number(challenge));
     }
 
+    await createSessionRequest(client, {
+      salt: sessionSalt,
+      alias,
+    });
+
     return NextResponse.json({
       sessionRequestTxHash: txHash,
 
@@ -196,6 +246,16 @@ export async function POST(
     console.error('Unexpected error in session POST handler:', error);
 
     if (error instanceof Error) {
+      if (error.message === 'Too many requests') {
+        return NextResponse.json(
+          {
+            status: StatusCodes.TOO_MANY_REQUESTS,
+            message: 'Too many requests',
+          },
+          { status: StatusCodes.TOO_MANY_REQUESTS }
+        );
+      }
+
       // Environment variable errors
       if (error.message === 'PROVIDER_PRIVATE_KEY is not set') {
         return NextResponse.json(
