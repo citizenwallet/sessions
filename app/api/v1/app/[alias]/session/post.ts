@@ -158,27 +158,33 @@ export async function POST(
       throw new Error('Too many requests');
     }
 
-    // max 3 requests per 10 minutes
-    const recentSessionRequestCount = await getRecentSessionRequestCount(
-      client,
-      {
-        salt: sessionSalt,
-        alias,
+    if (sessionRequest.type === 'sms') {
+      // max 3 requests per 10 minutes
+      const recentSessionRequestCount = await getRecentSessionRequestCount(
+        client,
+        {
+          salt: sessionSalt,
+          alias,
+        }
+      );
+
+      if (recentSessionRequestCount >= 3) {
+        throw new Error('Too many requests');
       }
-    );
 
-    if (recentSessionRequestCount >= 3) {
-      throw new Error('Too many requests');
-    }
+      // max 20 requests per day
 
-    // max 20 requests per day
-    const dailySessionRequestCount = await getDailySessionRequestCount(client, {
-      salt: sessionSalt,
-      alias,
-    });
+      const dailySessionRequestCount = await getDailySessionRequestCount(
+        client,
+        {
+          salt: sessionSalt,
+          alias,
+        }
+      );
 
-    if (dailySessionRequestCount >= 20) {
-      throw new Error('Too many requests');
+      if (dailySessionRequestCount >= 20) {
+        throw new Error('Too many requests');
+      }
     }
 
     const sessionRequestHash = generateSessionRequestHash({
