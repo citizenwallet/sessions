@@ -9,7 +9,8 @@ import {
   verifyIncomingSessionRequest,
   verifySessionConfirm,
 } from '@citizenwallet/sdk';
-import { getConfigOfAlias } from '@/services/cw/community';
+import { getCommunityByAlias } from '@/services/db/community';
+import { getServiceRoleClient } from '@/services/db';
 
 interface SessionConfirm {
   provider: string; // primary session manager provider address
@@ -88,8 +89,12 @@ export async function PATCH(
     const rawBody = await req.json();
     const sessionConfirm = sanitizeSessionConfirm(rawBody);
 
-    const config = await getConfigOfAlias(alias);
-    const community = new CommunityConfig(config);
+    const client = getServiceRoleClient();
+    const { data: community, error } = await getCommunityByAlias(client, alias);
+    if (error || !community) {
+      throw new Error('Community not found');
+    }
+    const communityConfig = new CommunityConfig(community.json);
 
     if (!providerPrivateKey) {
       throw new Error('PROVIDER_PRIVATE_KEY is not set');
@@ -97,7 +102,7 @@ export async function PATCH(
 
     const signer = new Wallet(providerPrivateKey);
 
-    const sessionManager = community.primarySessionConfig;
+    const sessionManager = communityConfig.primarySessionConfig;
     if (sessionConfirm.provider !== sessionManager.provider_address) {
       throw new Error('Invalid provider address');
     }
@@ -113,7 +118,7 @@ export async function PATCH(
     }
 
     const isSessionHashValid = await verifyIncomingSessionRequest({
-      community: community,
+      community: communityConfig,
       signer,
       sessionRequestHash: sessionConfirm.sessionRequestHash,
       sessionHash: sessionConfirm.sessionHash,
@@ -124,7 +129,7 @@ export async function PATCH(
     }
 
     const txHash = await confirmSession({
-      community,
+      community: communityConfig,
       signer,
       sessionRequestHash: sessionConfirm.sessionRequestHash,
       sessionHash: sessionConfirm.sessionHash,

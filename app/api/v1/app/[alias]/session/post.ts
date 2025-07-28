@@ -12,7 +12,7 @@ import {
   verifySessionRequest,
 } from '@citizenwallet/sdk';
 import { sendOtpEmail, sendOtpSMS } from '@/services/brevo';
-import { getConfigOfAlias } from '@/services/cw/community';
+import { getCommunityByAlias } from '@/services/db/community';
 import { generateOtp } from '@/utils/generateotp';
 import { getServiceRoleClient } from '@/services/db';
 import {
@@ -111,8 +111,12 @@ export async function POST(
     const rawBody = await req.json();
     const sessionRequest = sanitizeSessionRequest(rawBody);
 
-    const config = await getConfigOfAlias(alias);
-    const community = new CommunityConfig(config);
+    const client = getServiceRoleClient();
+    const { data: community, error } = await getCommunityByAlias(client, alias);
+    if (error || !community) {
+      throw new Error('Community not found');
+    }
+    const communityConfig = new CommunityConfig(community.json);
 
     if (!providerPrivateKey) {
       throw new Error('PROVIDER_PRIVATE_KEY is not set');
@@ -120,13 +124,13 @@ export async function POST(
 
     const signer = new Wallet(providerPrivateKey);
 
-    const sessionManager = community.primarySessionConfig;
+    const sessionManager = communityConfig.primarySessionConfig;
     if (sessionRequest.provider !== sessionManager.provider_address) {
       throw new Error('Invalid provider address');
     }
 
     const isValid = verifySessionRequest({
-      community,
+      community: communityConfig,
       sessionOwner: sessionRequest.owner,
       source: sessionRequest.source,
       type: sessionRequest.type,
@@ -142,8 +146,6 @@ export async function POST(
       source: sessionRequest.source,
       type: sessionRequest.type,
     });
-
-    const client = getServiceRoleClient();
 
     // max 1 request per 30 seconds
     const immediateSessionRequestCount = await getImmediateSessionRequestCount(
@@ -188,7 +190,7 @@ export async function POST(
     }
 
     const sessionRequestHash = generateSessionRequestHash({
-      community,
+      community: communityConfig,
       sessionOwner: sessionRequest.owner,
       salt: sessionSalt,
       expiry: sessionRequest.expiry,
@@ -215,7 +217,7 @@ export async function POST(
     const signedSessionHash = await signer.signMessage(getBytes(sessionHash));
 
     const txHash = await requestSession({
-      community,
+      community: communityConfig,
       signer,
       sessionSalt,
       sessionRequestHash,
